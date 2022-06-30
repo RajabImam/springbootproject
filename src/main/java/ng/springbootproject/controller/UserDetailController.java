@@ -5,6 +5,7 @@
  */
 package ng.springbootproject.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import ng.springbootproject.form.UserDetailForm;
 import ng.springbootproject.model.MUser;
 import ng.springbootproject.service.UserService;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/user")
+@Slf4j
 public class UserDetailController {
 
     @Autowired
@@ -39,8 +41,9 @@ public class UserDetailController {
         // Get user
         MUser user = userService.getUserOne(userId);
         user.setPassword(null);
-        // Get user
+        // Convert MUser to form
         form = modelMapper.map(user, UserDetailForm.class);
+        form.setSalaryList(user.getSalaryList());
         // Registered in Model
         model.addAttribute("userDetailForm", form);
         // Display user details screen
@@ -52,9 +55,13 @@ public class UserDetailController {
      */
     @PostMapping(value = "/detail", params = "update")
     public String updateUser(UserDetailForm form, Model model) {
-        // Update user
-        userService.updateUserOne(form.getUserId(), form.getPassword(),
-                form.getUserName());
+        try {
+            // Update user
+            userService.updateUserOne(form.getUserId(), form.getPassword(),
+                    form.getUserName());
+        } catch (Exception e) {
+            log.error("Error in user update", e);
+        }
         // Redirect to user list screen
         return "redirect:/user/list";
     }

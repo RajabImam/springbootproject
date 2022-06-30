@@ -22,7 +22,7 @@ public interface UserService {
     /**
      * Get user
      */
-    public List<MUser> getUsers();
+    public List<MUser> getUsers(MUser user);
 
     /**
      * Get user(1record)
@@ -40,4 +40,9 @@ public interface UserService {
      * Delete user
      */
     public void deleteUserOne(String userId);
+
+    /**
+     * Get login user information
+     */
+    public MUser getLoginUser(String userId);
 }

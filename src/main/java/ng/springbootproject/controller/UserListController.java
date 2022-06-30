@@ -6,12 +6,16 @@
 package ng.springbootproject.controller;
 
 import java.util.List;
+import ng.springbootproject.form.UserListForm;
 import ng.springbootproject.model.MUser;
 import ng.springbootproject.service.UserService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -25,13 +29,33 @@ public class UserListController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     /**
      * Display user list screen
      */
     @GetMapping("/list")
-    public String getUserList(Model model) {
+    public String getUserList(@ModelAttribute UserListForm form, Model model) {
+        // Convert form to MUser class
+        MUser user = modelMapper.map(form, MUser.class);
         // Get user list
-        List<MUser> userList = userService.getUsers();
+        List<MUser> userList = userService.getUsers(user);
+        // Registered in Model
+        model.addAttribute("userList", userList);
+        // Display user list screen
+        return "user/list";
+    }
+
+    /**
+     * User search process
+     */
+    @PostMapping("/list")
+    public String postUserList(@ModelAttribute UserListForm form, Model model ) {
+        // Convert form to MUser class
+        MUser user = modelMapper.map(form, MUser.class);
+        // Get user list
+        List<MUser> userList = userService.getUsers(user);
         // Registered in Model
         model.addAttribute("userList", userList);
         // Display user list screen

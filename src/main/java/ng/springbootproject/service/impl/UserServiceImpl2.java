@@ -6,10 +6,16 @@
 package ng.springbootproject.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 import ng.springbootproject.model.MUser;
-import ng.springbootproject.repository.UserMapper;
+import ng.springbootproject.repository.UserRepository;
 import ng.springbootproject.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,25 +25,33 @@ import org.springframework.transaction.annotation.Transactional;
  * @author RAJAB IMAM
  */
 @Service
-public class UserServiceImpl implements UserService {
+@Primary
+public class UserServiceImpl2 implements UserService {
 
     @Autowired
-    private UserMapper mapper;
-
+    private UserRepository repository;
     @Autowired
     private PasswordEncoder encoder;
 
     /**
      * User signup
      */
+    @Transactional
     @Override
     public void signup(MUser user) {
+        // Existence check
+        boolean exists = repository.existsById(user.getUserId());
+        if (exists) {
+            throw new DataAccessException("User already exists") {
+            };
+        }
         user.setDepartmentId(1);
         user.setRole("ROLE_GENERAL");
         // Password encryption
         String rawPassword = user.getPassword();
         user.setPassword(encoder.encode(rawPassword));
-        mapper.insertOne(user);
+        // insert
+        repository.save(user);
     }
 
     /**
@@ -45,7 +59,12 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<MUser> getUsers(MUser user) {
-        return mapper.findMany(user);
+        // Search conditions
+        ExampleMatcher matcher = ExampleMatcher
+                .matching() // and condition
+                .withStringMatcher(StringMatcher.CONTAINING ) // Like clause
+                .withIgnoreCase(); // Both uppercase and lowercase
+        return repository.findAll(Example.of(user, matcher));
     }
 
     /**
@@ -53,7 +72,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public MUser getUserOne(String userId) {
-        return mapper.findOne(userId);
+        Optional<MUser> option = repository.findById(userId);
+        MUser user = option.orElse(null);
+        return user;
     }
 
     /**
@@ -61,31 +82,28 @@ public class UserServiceImpl implements UserService {
      */
     @Transactional
     @Override
-    public void updateUserOne(String userId,
-            String password,
-            String userName) {
+    public void updateUserOne(String userId, String password, String userName) {
         // Password encryption
         String encryptPassword = encoder.encode(password);
-        mapper.updateOne(userId, encryptPassword, userName);
-
-        // Raise an exception
-        //int i = 1 / 0;
+        // User update
+        repository.updateUser(userId, encryptPassword, userName);
     }
 
     /**
      * Delete user
      */
+    @Transactional
     @Override
     public void deleteUserOne(String userId) {
-        int count = mapper.deleteOne(userId);
+        repository.deleteById(userId);
     }
 
     /**
-     * Get login user information
+     * Get login user
      */
     @Override
     public MUser getLoginUser(String userId) {
-        return mapper.findLoginUser(userId);
+        return repository.findLoginUser(userId);
     }
 
 }

@@ -25,7 +25,7 @@ public interface UserMapper {
     /**
      * Get user
      */
-    public List<MUser> findMany();
+    public List<MUser> findMany(MUser user);
 
     /**
      * Get user(1record)
@@ -43,4 +43,9 @@ public interface UserMapper {
      * Delete user
      */
     public int deleteOne(@Param("userId") String userId);
+
+    /**
+     * Get login user
+     */
+    public MUser findLoginUser(String userId);
 }
